@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Siddharth Hardwares - Billing Software</title>
+    
+    <style>
+        /* General Reset & Body */
+        :root {
+            --primary-color: #007bff; /* Blue */
+            --secondary-color: #6c757d; /* Grey */
+            --success-color: #28a745; /* Green */
+            --danger-color: #dc3545; /* Red */
+            --bg-light: #f8f9fa;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-light);
+            color: #333;
+        }
+
+        /* Container & Header */
+        #main-app {
+            max-width: 95%;
+            margin: 0 auto;
+            padding-bottom: 50px; /* Space for mobile footer */
+        }
+        
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        /* Form & Input Styling */
+        input, select, button {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box; 
+            width: 100%; 
+        }
+
+        button {
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary { background-color: var(--primary-color); }
+        .btn-success { background-color: var(--success-color); }
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-secondary { background-color: var(--secondary-color); }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* Layout & Sections */
+        .section {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Login Screen Specifics */
+        #login-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--primary-color);
+        }
+
+        #login-form {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 350px;
+        }
+
+        #login-error {
+            color: var(--danger-color);
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Navigation (Mobile Footer) */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #333;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        nav button {
+            background: none;
+            border: none;
+            color: white;
+            flex-grow: 1;
+            padding: 10px;
+            font-size: 0.9em;
+            width: auto;
+        }
+
+        nav button.active {
+            background-color: var(--primary-color);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+            font-size: 0.9em;
+        }
+        
+        td:nth-child(4), th:nth-child(4) {
+            text-align: right; /* Align Total column to the right */
+        }
+
+        th {
+            background-color: var(--bg-light);
+            font-weight: bold;
+        }
+        
+        .cancelled-bill {
+            background-color: #fce4e4; 
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+
+        /* Billing Section Grid */
+        .billing-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        @media (min-width: 600px) {
+            /* Desktop/Tablet Optimizations */
+            #main-app {
+                max-width: 1200px;
+            }
+
+            .billing-grid {
+                grid-template-columns: 3fr 1fr 1fr 1fr; /* Product, Qty, Add, Total */
+            }
+
+            nav {
+                position: static; /* Remove fixed footer on desktop */
+                background-color: var(--secondary-color);
+                padding: 0;
+                margin-bottom: 20px;
+            }
+
+            nav button {
+                border-radius: 0;
+            }
+
+            /* Dashboard Layout */
+            .dashboard-stats {
+                display: flex;
+                justify-content: space-around;
+                gap: 20px;
+            }
+            .stat-box {
+                flex: 1;
+                text-align: center;
+                border: 1px solid #ccc;
+                padding: 15px;
+                border-radius: 8px;
+                background-color: var(--bg-light);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="login-screen">
+        <div id="login-form">
+            <h2>Siddharth Hardwares</h2>
+            <p>Billing Login</p>
+            <input type="text" id="login-username" placeholder="Username (admin)" required>
+            <input type="password" id="login-password" placeholder="Password (password123)" required>
+            <p id="login-error"></p>
+            <button class="btn-primary" onclick="handleLogin()">Login</button>
+        </div>
+    </div>
+
+    <div id="main-app" style="display: none;">
+        <header>
+            <h1>Siddharth Hardwares</h1>
+            <p id="current-datetime"></p>
+        </header>
+
+        <nav>
+            <button class="active" onclick="showSection('billing')">🧾 Billing</button>
+            <button onclick="showSection('stock')">📦 Stock</button>
+            <button onclick="showSection('reports')">📊 Reports</button>
+        </nav>
+
+        <div id="billing-section" class="section">
+            <h2>New Bill</h2>
+
+            <div class="billing-grid">
+                <select id="billing-product-select">
+                    <option value="">-- Select Item --</option>
+                    </select>
+
+                <input type="number" id="billing-quantity" placeholder="Quantity" min="1" value="1">
+            </div>
+            
+            <button class="btn-primary" onclick="addItemToBill()">➕ Add Item to Bill</button>
+
+            <h3>Items in Bill</h3>
+            <table id="bill-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Unit/Price</th>
+                        <th>Qty</th>
+                        <th>Total</th>
+                        <th>Remove</th> </tr>
+                </thead>
+                <tbody id="bill-table-body">
+                    </tbody>
+            </table>
+
+            <hr>
+            
+            <div style="text-align: right; margin-top: 15px;">
+                <p><strong>Grand Total: ₹ <span id="grand-total">0.00</span></strong></p>
+                
+                <div class="billing-grid" style="grid-template-columns: 1fr 1fr; text-align: left;">
+                    <select id="payment-mode">
+                        <option value="Cash">Cash</option>
+                        <option value="UPI">UPI</option>
+                        <option value="Card">Card</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <input type="number" id="cash-received" placeholder="Cash Received" oninput="calculateBalance()">
+                    <p style="grid-column: 1 / -1; text-align: right;">Balance: ₹ <span id="balance-amount">0.00</span></p>
+                </div>
+            </div>
+            
+            <div class="billing-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-top: 20px;">
+                <button class="btn-success" onclick="updateStockAndSaveBill(false)">💾 Save Bill</button>
+                <button class="btn-primary" onclick="updateStockAndSaveBill(true)">🖨️ Print Bill</button>
+                <button class="btn-danger" onclick="cancelBill()">❌ Cancel Bill</button>
+            </div>
+        </div>
+
+        <div id="stock-section" class="section" style="display: none;">
+            <h2>Stock Management</h2>
+
+            <div id="low-stock-reminder" style="display: none; padding: 10px; background-color: #ffdddd; color: var(--danger-color); border-radius: 5px; margin-bottom: 15px;"></div>
+
+            <h3>Add/Edit Item</h3>
+            <input type="hidden" id="stock-id">
+            <input type="text" id="stock-name" placeholder="Item Name (e.g., Bolt M8)" required>
+            <div class="billing-grid" style="grid-template-columns: 2fr 1fr 1fr;">
+                <select id="stock-unit">
+                    <option value="Piece">Piece</option>
+                    <option value="Number">Number</option>
+                    <option value="Kg">Kg</option>
+                    <option value="Gram">Gram</option>
+                </select>
+                <input type="number" id="stock-price" placeholder="Price (per unit)" min="0.01" step="0.01" required>
+                <input type="number" id="stock-quantity" placeholder="Current Stock" min="0" required>
+            </div>
+            <button class="btn-success" onclick="saveStockItem()">Save/Update Stock</button>
+
+            <h3>Current Stock</h3>
+            <table id="stock-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Unit</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="stock-table-body">
+                    </tbody>
+            </table>
+        </div>
+
+        <div id="reports-section" class="section" style="display: none;">
+            <h2>Dashboard & Reports</h2>
+
+            <h3>Sales Summary (Completed Bills)</h3>
+            <div class="dashboard-stats">
+                <div class="stat-box">
+                    <h4>Today's Sales</h4>
+                    <p><strong><span id="dashboard-today-sales">₹0.00</span></strong></p>
+                </div>
+                <div class="stat-box">
+                    <h4>Monthly Sales</h4>
+                    <p><strong><span id="dashboard-monthly-sales">₹0.00</span></strong></p>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 20px;">Reports</h3>
+            <button class="btn-secondary" onclick="downloadStockReport()">⬇️ Download Stock Report (CSV)</button>
+            <button class="btn-secondary" onclick="downloadSalesReport()">⬇️ Download Sales Report (CSV)</button>
+            
+            <h3 style="margin-top: 20px;">Recent Bills (View/Cancel)</h3>
+            <table id="sales-report-table">
+                <thead>
+                    <tr>
+                        <th>Bill ID</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Mode</th>
+                        <th>Status</th> <th>Action</th> </tr>
+                </thead>
+                <tbody id="sales-report-body">
+                    </tbody>
+            </table>
+
+        </div>
+    </div>
+
+    <script>
+        // --- Global Constants and Initializers ---
+        const STOCK_KEY = 'stockItems';
+        const BILLS_KEY = 'salesBills';
+        const USERNAME = "admin";
+        const PASSWORD = "password123";
+        let currentBillItems = [];
+        let stockData = JSON.parse(localStorage.getItem(STOCK_KEY) || '[]');
+        let billsData = JSON.parse(localStorage.getItem(BILLS_KEY) || '[]');
+
+        // --- Utility Functions ---
+
+        // Load data from localStorage on start
+        function initializeApp() {
+            stockData = JSON.parse(localStorage.getItem(STOCK_KEY) || '[]');
+            billsData = JSON.parse(localStorage.getItem(BILLS_KEY) || '[]');
+            renderStockTable();
+            loadProductDropdown();
+            updateDashboard();
+
+            // Set default stock if empty (for first run)
+            if (stockData.length === 0) {
+                stockData = [
+                    { id: 1, name: 'Hex Nut M10', unit: 'Piece', price: 2.50, stock: 150 },
+                    { id: 2, name: 'Galvanized Bolt M6', unit: 'Number', price: 4.00, stock: 80 },
+                    { id: 3, name: 'Steel Wire', unit: 'Kg', price: 120.00, stock: 5 },
+                ];
+                localStorage.setItem(STOCK_KEY, JSON.stringify(stockData));
+                renderStockTable();
+            }
+        }
+
+        // Handles Section Switching
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            document.getElementById(sectionId + '-section').style.display = 'block';
+
+            document.querySelectorAll('nav button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.querySelector(`nav button[onclick*="${sectionId}"]`).classList.add('active');
+
+            // Refresh data when switching to relevant sections
+            if (sectionId === 'stock') renderStockTable();
+            if (sectionId === 'reports') updateDashboard();
+        }
+
+        // Continuous Date/Time Display
+        function updateDateTime() {
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US');
+            document.getElementById('current-datetime').textContent = `${dateStr} | ${timeStr}`;
+            setTimeout(updateDateTime, 1000);
+        }
+
+        // --- 1. Login System Logic ---
+        function handleLogin() {
+            const usernameInput = document.getElementById('login-username').value;
+            const passwordInput = document.getElementById('login-password').value;
+            const loginError = document.getElementById('login-error');
+
+            if (usernameInput === USERNAME && passwordInput === PASSWORD) {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                loginError.textContent = '';
+                initializeApp(); // Load all data and setup the app
+                updateDateTime();
+                showSection('billing'); // Start on the billing page
+            } else {
+                loginError.textContent = 'Invalid username or password.';
+            }
+        }
+
+        // --- 2. Billing Page Logic ---
+
+        // Populate the item selection dropdown
+        function loadProductDropdown() {
+            const select = document.getElementById('billing-product-select');
+            select.innerHTML = '<option value="">-- Select Item --</option>';
+
+            stockData.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                // Display stock in the dropdown for quick reference
+                option.textContent = `${item.name} (${item.unit}) - ₹${item.price.toFixed(2)} (Stock: ${item.stock})`;
+                select.appendChild(option);
+            });
+        }
+
+        function addItemToBill() {
+            const productId = parseInt(document.getElementById('billing-product-select').value);
+            const quantity = parseFloat(document.getElementById('billing-quantity').value);
+            
+            if (!productId || isNaN(quantity) || quantity <= 0) return alert("Select product and enter valid quantity.");
+
+            const selectedItem = stockData.find(item => item.id === productId);
+
+            if (!selectedItem) return alert("Error: Item not found in stock.");
+
+            // Check total quantity already in bill + new quantity against stock
+            const currentBillQty = currentBillItems.filter(i => i.id === productId).reduce((sum, i) => sum + i.quantity, 0);
+            
+            if (selectedItem.stock < (currentBillQty + quantity)) {
+                return alert(`Insufficient stock for ${selectedItem.name}. Available: ${selectedItem.stock}. Already added in bill: ${currentBillQty}`);
+            }
+
+            const total = selectedItem.price * quantity;
+            
+            // Update/Add logic
+            const existingItemIndex = currentBillItems.findIndex(item => item.id === productId);
+
+            if (existingItemIndex > -1) {
+                currentBillItems[existingItemIndex].quantity += quantity;
+                currentBillItems[existingItemIndex].total += total;
+            } else {
+                currentBillItems.push({
+                    id: selectedItem.id,
+                    name: selectedItem.name,
+                    unit: selectedItem.unit,
+                    price: selectedItem.price,
+                    quantity: quantity,
+                    total: total
+                });
+            }
+            
+            document.getElementById('billing-quantity').value = '1'; // Reset quantity input
+            renderBillTable();
+        }
+        
+        // NEW: Remove item from the UNSAVED bill
+        function removeItemFromBill(itemId) {
+            const itemIndex = currentBillItems.findIndex(item => item.id === itemId);
+
+            if (itemIndex > -1) {
+                currentBillItems.splice(itemIndex, 1); // Remove the item
+                renderBillTable();
+            }
+        }
+
+        function renderBillTable() {
+            const tableBody = document.getElementById('bill-table-body');
+            tableBody.innerHTML = '';
+            let grandTotal = 0;
+
+            currentBillItems.forEach(item => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = item.name;
+                row.insertCell().textContent = `${item.unit} @ ₹${item.price.toFixed(2)}`;
+                row.insertCell().textContent = item.quantity;
+                
+                // Align total cell to the right
+                const totalCell = row.insertCell();
+                totalCell.textContent = `₹${item.total.toFixed(2)}`;
+                totalCell.style.textAlign = 'right'; 
+                
+                grandTotal += item.total;
+                
+                // NEW: Remove button for current bill items
+                const removeCell = row.insertCell();
+                const removeBtn = document.createElement('button');
+                removeBtn.textContent = 'X';
+                removeBtn.className = 'btn-danger';
+                removeBtn.style.width = 'auto';
+                removeBtn.style.padding = '5px 8px';
+                removeBtn.onclick = () => removeItemFromBill(item.id);
+                removeCell.appendChild(removeBtn);
+            });
+
+            document.getElementById('grand-total').textContent = grandTotal.toFixed(2);
+            calculateBalance();
+        }
+
+        function calculateBalance() {
+            const grandTotal = parseFloat(document.getElementById('grand-total').textContent);
+            const cashReceived = parseFloat(document.getElementById('cash-received').value) || 0;
+            const balance = cashReceived - grandTotal;
+            document.getElementById('balance-amount').textContent = balance.toFixed(2);
+        }
+        
+        // Save/Print Bill Logic
+        function updateStockAndSaveBill(print = false) {
+            if (currentBillItems.length === 0) return alert("Bill is empty! Cannot save.");
+
+            // 1. Update Stock (permanently deduct)
+            currentBillItems.forEach(billItem => {
+                const stockItem = stockData.find(s => s.id === billItem.id);
+                if (stockItem) {
+                    stockItem.stock -= billItem.quantity; 
+                }
+            });
+
+            localStorage.setItem(STOCK_KEY, JSON.stringify(stockData)); // Save updated stock
+
+            // 2. Save Bill
+            const newBill = {
+                billId: billsData.length + 1,
+                date: new Date().toISOString(),
+                items: JSON.parse(JSON.stringify(currentBillItems)), // Deep copy of items
+                grandTotal: parseFloat(document.getElementById('grand-total').textContent),
+                paymentMode: document.getElementById('payment-mode').value,
+                status: 'Completed' // NEW: Add status field
+            };
+            billsData.push(newBill);
+            localStorage.setItem(BILLS_KEY, JSON.stringify(billsData));
+
+            // 3. Clear Bill and UI updates
+            cancelBill(false); // Don't show success alert yet
+            
+            if (print) {
+                alert(`Bill #${newBill.billId} saved and ready to print!`);
+            } else {
+                 alert(`Bill #${newBill.billId} saved successfully!`);
+            }
+            
+            loadProductDropdown(); 
+            checkLowStock(); 
+            updateDashboard();
+        }
+        
+        // Cancel Bill (for UNSAVED bill)
+        function cancelBill(showAlert = true) {
+            currentBillItems = [];
+            document.getElementById('cash-received').value = '';
+            renderBillTable();
+            // NOTE: This function only clears the temporary bill items, it does NOT touch permanent stock or saved bills.
+            if (showAlert) alert("Current bill cancelled.");
+        }
+
+
+        // --- 3. Stock Management Logic ---
+
+        function editStockItem(id) {
+            const item = stockData.find(i => i.id === id);
+            if (item) {
+                document.getElementById('stock-id').value = item.id;
+                document.getElementById('stock-name').value = item.name;
+                document.getElementById('stock-unit').value = item.unit;
+                document.getElementById('stock-price').value = item.price;
+                document.getElementById('stock-quantity').value = item.stock;
+                document.getElementById('stock-name').focus();
+            }
+        }
+
+        function saveStockItem() {
+            const name = document.getElementById('stock-name').value.trim();
+            const unit = document.getElementById('stock-unit').value;
+            const price = parseFloat(document.getElementById('stock-price').value);
+            const stock = parseInt(document.getElementById('stock-quantity').value);
+            const editId = document.getElementById('stock-id').value; 
+
+            if (!name || isNaN(price) || price <= 0 || isNaN(stock) || stock < 0) return alert("Please fill all fields correctly.");
+
+            if (editId) {
+                // Edit existing item
+                const itemIndex = stockData.findIndex(item => item.id == editId);
+                if (itemIndex > -1) {
+                    stockData[itemIndex] = { id: parseInt(editId), name, unit, price, stock };
+                }
+            } else {
+                // Add new item
+                const newId = stockData.length ? Math.max(...stockData.map(i => i.id)) + 1 : 1;
+                stockData.push({ id: newId, name, unit, price, stock });
+            }
+
+            localStorage.setItem(STOCK_KEY, JSON.stringify(stockData));
+            
+            // Clear form
+            document.getElementById('stock-id').value = '';
+            document.getElementById('stock-name').value = '';
+            document.getElementById('stock-price').value = '';
+            document.getElementById('stock-quantity').value = '';
+
+            renderStockTable(); 
+            loadProductDropdown(); 
+        }
+        
+        // NEW: Delete Stock Item
+        function deleteStockItem(id) {
+            if (!confirm("Are you sure you want to permanently delete this stock item? This cannot be undone.")) return;
+
+            stockData = stockData.filter(item => item.id !== id);
+            localStorage.setItem(STOCK_KEY, JSON.stringify(stockData));
+
+            renderStockTable();
+            loadProductDropdown();
+            alert("Stock item deleted.");
+        }
+
+        function renderStockTable() {
+            const tableBody = document.getElementById('stock-table-body');
+            tableBody.innerHTML = '';
+            
+            stockData.forEach(item => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = item.name;
+                row.insertCell().textContent = item.unit;
+                row.insertCell().textContent = `₹${item.price.toFixed(2)}`;
+                row.insertCell().textContent = item.stock;
+
+                const actionCell = row.insertCell();
+                
+                // Edit Button
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.className = 'btn-secondary';
+                editBtn.style.width = 'auto';
+                editBtn.style.padding = '5px 8px';
+                editBtn.style.marginRight = '5px';
+                editBtn.onclick = () => editStockItem(item.id);
+                actionCell.appendChild(editBtn);
+
+                // Delete Button (NEW)
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'btn-danger';
+                deleteBtn.style.width = 'auto';
+                deleteBtn.style.padding = '5px 8px';
+                deleteBtn.onclick = () => deleteStockItem(item.id);
+                actionCell.appendChild(deleteBtn);
+            });
+            checkLowStock();
+        }
+
+        function checkLowStock() {
+            const lowStockThreshold = 10;
+            const lowStockDiv = document.getElementById('low-stock-reminder');
+            
+            const lowItems = stockData.filter(item => item.stock < lowStockThreshold);
+
+            if (lowItems.length > 0) {
+                lowStockDiv.style.display = 'block';
+                lowStockDiv.innerHTML = '🚨 **LOW STOCK ALERT:**<br>' + 
+                                         lowItems.map(item => `${item.name} (${item.stock} left)`).join('<br>');
+            } else {
+                lowStockDiv.style.display = 'none';
+            }
+        }
+
+
+        // --- 4. Reports & Dashboard Logic ---
+
+        // NEW: Function to handle canceling a SAVED bill and restocking items
+        function revertSavedBill(billId) {
+            if (!confirm(`Are you sure you want to REVERSE Bill #${billId} and RESTOCK all items? This action cannot be undone.`)) return;
+
+            const billIndex = billsData.findIndex(b => b.billId === billId);
+
+            if (billIndex === -1 || billsData[billIndex].status === 'Cancelled') {
+                return alert("Error: Bill not found or already cancelled.");
+            }
+
+            const billToRevert = billsData[billIndex];
+            
+            // 1. Restock the items
+            billToRevert.items.forEach(item => {
+                const stockItem = stockData.find(s => s.id === item.id);
+                if (stockItem) {
+                    stockItem.stock += item.quantity; // ADD stock back
+                }
+            });
+
+            // 2. Mark the bill as cancelled in the sales data
+            billsData[billIndex].status = 'Cancelled';
+            billsData[billIndex].revertedDate = new Date().toISOString();
+
+            // 3. Save the updated data
+            localStorage.setItem(STOCK_KEY, JSON.stringify(stockData));
+            localStorage.setItem(BILLS_KEY, JSON.stringify(billsData));
+            
+            alert(`Bill #${billId} successfully cancelled. Items have been RESTOCKED.`);
+
+            // 4. Refresh UI
+            updateDashboard();
+            loadProductDropdown(); // To show updated stock in billing
+            renderStockTable(); // To show updated stock in stock section
+        }
+        
+        // NEW: Function to render the recent bills table, including the cancel option
+        function renderRecentBills() {
+            const reportBody = document.getElementById('sales-report-body');
+            reportBody.innerHTML = '';
+
+            // Sort bills by date descending for report
+            const recentBills = [...billsData].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            recentBills.forEach(bill => {
+                const row = reportBody.insertRow();
+                
+                // Highlight cancelled bills
+                if (bill.status === 'Cancelled') {
+                    row.className = 'cancelled-bill'; 
+                }
+                
+                row.insertCell().textContent = bill.billId;
+                row.insertCell().textContent = new Date(bill.date).toLocaleString();
+                
+                // Align total cell to the right
+                const totalCell = row.insertCell();
+                totalCell.textContent = `₹${bill.grandTotal.toFixed(2)}`;
+                totalCell.style.textAlign = 'right'; 
+                
+                row.insertCell().textContent = bill.paymentMode;
+                row.insertCell().textContent = bill.status || 'Completed';
+
+                const actionCell = row.insertCell();
+
+                if (bill.status !== 'Cancelled') {
+                    const revertBtn = document.createElement('button');
+                    revertBtn.textContent = 'Cancel/Restock';
+                    revertBtn.className = 'btn-danger';
+                    revertBtn.style.width = 'auto';
+                    revertBtn.style.padding = '5px';
+                    revertBtn.onclick = () => revertSavedBill(bill.billId);
+                    actionCell.appendChild(revertBtn);
+                } else {
+                    actionCell.textContent = 'Reverted';
+                }
+            });
+        }
+
+        function updateDashboard() {
+            const today = new Date().toISOString().slice(0, 10);
+            const currentMonth = today.slice(0, 7);
+
+            let todaySales = 0;
+            let monthlySales = 0;
+
+            // Filter for ONLY completed sales for reporting totals
+            const completedBills = billsData.filter(bill => bill.status !== 'Cancelled');
+
+            completedBills.forEach(bill => {
+                const billDate = bill.date.slice(0, 10);
+                
+                if (billDate === today) {
+                    todaySales += bill.grandTotal;
+                }
+                if (billDate.startsWith(currentMonth)) {
+                    monthlySales += bill.grandTotal;
+                }
+            });
+
+            document.getElementById('dashboard-today-sales').textContent = `₹${todaySales.toFixed(2)}`;
+            document.getElementById('dashboard-monthly-sales').textContent = `₹${monthlySales.toFixed(2)}`;
+            
+            renderRecentBills(); // Update the report table
+        }
+
+        // Generic CSV Export function (Unchanged)
+        function exportToCSV(data, filename) {
+            if (data.length === 0) return alert(`No ${filename} data to download.`);
+
+            let csvContent = '';
+            
+            // Generate Headers
+            const headers = Object.keys(data[0]);
+            csvContent += headers.join(',') + '\n';
+            
+            // Generate Rows
+            data.forEach(row => {
+                const values = headers.map(header => {
+                    let value = row[header];
+                    // Handle complex JSON fields like 'items' by stringifying them
+                    if (typeof value === 'object' && value !== null) {
+                        value = JSON.stringify(value).replace(/"/g, '""'); // Escape inner quotes
+                    }
+                    // Enclose string values in quotes to handle commas within data
+                    return `"${value}"`;
+                });
+                csvContent += values.join(',') + '\n';
+            });
+
+            // Trigger download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute('download', filename + '.csv');
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function downloadStockReport() {
+            exportToCSV(stockData, 'Stock_Report');
+        }
+
+        function downloadSalesReport() {
+            exportToCSV(billsData, 'Sales_Report');
+        }
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // The logic runs after successful login via handleLogin()
+        });
+    </script>
+</body>
+</html>
